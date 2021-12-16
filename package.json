@@ -1,5 +1,5 @@
 {
-  "name": "red-contrib-wechaty",
+  "name": "node-red-contrib-wechaty",
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
