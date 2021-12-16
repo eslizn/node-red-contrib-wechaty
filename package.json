@@ -1,0 +1,35 @@
+{
+  "name": "red-contrib-wechaty",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eslizn/node-red-contrib-wechaty.git"
+  },
+  "node-red": {
+    "nodes": {
+      "wechaty": "wechaty.js"
+    }
+  },
+  "dependencies": {
+    "wechaty": "^1.10.4",
+    "wechaty-puppet-service": "^1.11.2"
+  },
+  "description": "",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "devDependencies": {
+    "node-red-node-test-helper": "^0.2.7"
+  },
+  "bugs": {
+    "url": "https://github.com/eslizn/node-red-contrib-wechaty/issues"
+  },
+  "homepage": "https://github.com/eslizn/node-red-contrib-wechaty#readme",
+  "directories": {
+    "test": "test"
+  }
+}
