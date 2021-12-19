@@ -1,6 +1,6 @@
 {
   "name": "node-red-contrib-wechaty",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
   "repository": {
@@ -13,14 +13,17 @@
     }
   },
   "dependencies": {
-    "wechaty": "^1.10.4",
+    "wechaty": "^1.11.25",
     "wechaty-puppet-service": "^1.11.2"
   },
   "description": "",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ["node-red", "wechaty"],
+  "keywords": [
+    "node-red",
+    "wechaty"
+  ],
   "author": "eslizn <eslizn@gmail.com>",
   "devDependencies": {
     "node-red-node-test-helper": "^0.2.7"
