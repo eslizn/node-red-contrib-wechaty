@@ -75,7 +75,6 @@ module.exports = function (RED) {
 					token: config.token
 				},
 			});
-			this.start();
 		}
 
 		instances[config.id].off('login', () => {}).on('login', (user) => {
@@ -123,5 +122,9 @@ module.exports = function (RED) {
 		}).off('error', () => {}).on('error', (error) => {
 			this.send({topic: 'error', payload: error});
 		});
+
+		if (!instances[config.id].isLoggedIn) {
+			this.start();
+		}
 	});
 }
