@@ -80,7 +80,7 @@ module.exports = function (RED) {
 		instances[config.id].off('login', () => {}).on('login', (user) => {
 			this.online();
 			this.send({topic: 'login', payload: user});
-		}).off('login', () => {}).on('logout', (user) => {
+		}).off('logout', () => {}).on('logout', (user) => {
 			this.offline();
 			this.send({topic: 'logout', payload: user});
 		}).off('message', () => {}).on('message', (msg) => {
