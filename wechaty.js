@@ -115,8 +115,10 @@ module.exports = function (RED) {
 				payload: topic
 			});
 		}).off('start', () => {}).on('start', () => {
+			this.online();
 			this.send({topic: 'start', payload: null});
 		}).off('stop', () => {}).on('stop', () => {
+			this.offline();
 			this.send({topic: 'stop', payload: null});
 			this.start();
 		}).off('error', () => {}).on('error', (error) => {
