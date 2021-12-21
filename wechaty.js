@@ -15,7 +15,7 @@ module.exports = function (RED) {
 		};
 
 		this.start = () => {
-			if (config.id in instances) {
+			if ((config.id in instances) && !instances[config.id].isLoggedIn) {
 				instances[config.id].start().then(() => {
 					this.log('Starter Bot Started.')
 				}).catch(async error => {
@@ -125,8 +125,6 @@ module.exports = function (RED) {
 			this.send({topic: 'error', payload: error});
 		});
 
-		if (!instances[config.id].isLoggedIn) {
-			this.start();
-		}
+		this.start();
 	});
 }
