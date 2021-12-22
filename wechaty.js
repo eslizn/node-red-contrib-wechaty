@@ -60,20 +60,11 @@ module.exports = function (RED) {
 			}
 		});
 
-
-		//diff 
-		if ((config.id in instances) && instances[config.id].__options.puppetOptions.token != config.token) {
-			this.destory();
-		}
-
 		if (!(config.id in instances)) {
 			this.offline();
 			instances[config.id] = WechatyBuilder.build({
 				name: config.id,
-				puppet: 'wechaty-puppet-service',
-				puppetOptions: {
-					token: config.token
-				},
+				puppet: 'wechaty-puppet-wechat',
 			});
 		}
 
