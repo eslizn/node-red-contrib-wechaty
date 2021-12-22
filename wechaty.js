@@ -35,7 +35,7 @@ module.exports = async function (RED) {
 		});
 
 		this.on('input', async (msg) => {
-			if (!(config.id in instances) || !instances[config.id].isLoggedIn) {
+			if (!(config.id in instances) || !instances[config.id].isLoggedIn || msg.self()) {
 				return;
 			}
 			if (msg.respond) {
