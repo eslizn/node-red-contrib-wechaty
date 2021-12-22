@@ -2,38 +2,34 @@ const {WechatyBuilder, ScanStatus} = require('wechaty');
 
 let instances = {};
 
-module.exports = function (RED) {
+module.exports = async function (RED) {
 	RED.nodes.registerType('wechaty', function (config) {
 		RED.nodes.createNode(this, config);
 		
-		this.online = () => {
-			this.status({fill: 'green', shape: 'dot', text: 'online'});
-		};
-
-		this.offline = () => {
-			this.status({fill: 'red', shape: 'ring', text: 'offline'});
-		};
-
-		this.start = () => {
-			if ((config.id in instances) && !instances[config.id].isLoggedIn) {
-				instances[config.id].start().then(() => {
-					this.log('Starter Bot Started.')
-				}).catch(async error => {
-					this.send({topic: 'error', payload: error});
-				});
+		this.refresh = () => {
+			if (instances[config.id].isLoggedIn) {
+				this.status({fill: 'green', shape: 'dot', text: 'online'});
+			} else {
+				this.status({fill: 'red', shape: 'ring', text: 'offline'});
 			}
-		};
+		}
 
-		this.destory = async () => {
+		if (!(config.id in instances)) {
+			instances[config.id] = WechatyBuilder.build({
+				name: config.id,
+				puppet: 'wechaty-puppet-wechat',
+			});
+			instances[config.id].start().then(() => {
+				this.log('Starter Bot Started.')
+			}).catch(async error => {
+				this.send({topic: 'error', payload: error});
+			});
+		}
+
+		this.on('close', async (removed, done) => {
 			if (config.id in instances) {
 				await instances[config.id].stop();
 				delete instances[config.id];
-			}
-		};
-
-		this.on('close', async (removed, done) => {
-			if (removed) {
-				await this.destory();
 			}
 			done();
 		});
@@ -60,19 +56,11 @@ module.exports = function (RED) {
 			}
 		});
 
-		if (!(config.id in instances)) {
-			this.offline();
-			instances[config.id] = WechatyBuilder.build({
-				name: config.id,
-				puppet: 'wechaty-puppet-wechat',
-			});
-		}
-
 		instances[config.id].off('login', () => {}).on('login', (user) => {
-			this.online();
+			this.refresh();
 			this.send({topic: 'login', payload: user});
 		}).off('logout', () => {}).on('logout', (user) => {
-			this.offline();
+			this.refresh();
 			this.send({topic: 'logout', payload: user});
 		}).off('message', () => {}).on('message', (msg) => {
 			this.send({topic: 'message', payload: msg});
@@ -106,16 +94,21 @@ module.exports = function (RED) {
 				payload: topic
 			});
 		}).off('start', () => {}).on('start', () => {
-			this.online();
+			this.refresh();
 			this.send({topic: 'start', payload: null});
 		}).off('stop', () => {}).on('stop', () => {
-			this.offline();
+			this.refresh();
 			this.send({topic: 'stop', payload: null});
-			this.start();
+		}).off('scan', () => {}).on('scan', (qrcode, status, data) => {
+			this.refresh();
+			this.context().set('qrcode', qrcode);
+			this.context().set('status', status);
+			if (status !== ScanStatus.Waiting) {
+				return;
+			}
+			this.send({topic: 'scan', payload: qrcode, status: status});
 		}).off('error', () => {}).on('error', (error) => {
 			this.send({topic: 'error', payload: error});
 		});
-
-		this.start();
 	});
 }

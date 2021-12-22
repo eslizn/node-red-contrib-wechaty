@@ -1,23 +1,70 @@
 <script type="text/javascript">
+	const withAuthorization = (xhr) => {
+		xhr.setRequestHeader('Node-RED-API-Version', 'v2');
+		if (RED.settings.get("auth-tokens")) {
+			xhr.setRequestHeader('Authorization', 'Bearer ' + RED.settings.get("auth-tokens").access_token);
+		}
+	}
+
     RED.nodes.registerType('wechaty', {
         category: 'network',
         paletteLabel: 'wechaty',
         color: '#a6bbcf',
         defaults: {
-            token: {value: ''}
+            name: {value: 'wechaty'}
         },
         inputs: 1,
         outputs: 1,
         icon: "wechaty-logo.png",
         label: function () {
-            return 'wechaty';
+            return this.name || 'wechaty';
+        },
+        oneditprepare: function () {
+            this.refresh = true;
+            if (!this.interval) {
+            	this.interval = () => {
+					if (!this.interval) {
+						return;
+					}
+					$.ajax({
+						url: '/context/node/' + this.id,
+						dataType: 'json',
+						beforeSend: withAuthorization,
+					}).then((data) => {
+						data = Object.values(data).length ? Object.values(data)[0] : data;
+						if (data && data.qrcode && data.qrcode.msg && data.qrcode.msg.indexOf('https://') === 0) {
+							$('#node-input-qrcode').attr('src', data.qrcode.msg.replace('/l/', '/qrcode/'));
+							$('#node-input-qrcode').parent().show();
+						} else {
+							$('#node-input-qrcode').parent().hide();
+						}
+					}).fail(() => {
+						console.log(arguments);
+					}).always(() => {
+						if (this.refresh) {
+							setTimeout(this.interval, 3000);
+						}
+					});
+				};
+            }
+            this.interval();
+        },
+        oneditcancel: function () {
+            this.refresh = false;
+        },
+        oneditsave: function () {
+            this.refresh = false;
         }
     });
 </script>
 
 <script type="text/html" data-template-name="wechaty">
     <div class="form-row">
-        <label for="node-input-token"><i class="fa fa-tag"></i> Token</label>
-        <input type="text" id="node-input-token" placeholder="token" />
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="instance name" />
+    </div>
+    <div class="form-row" style="display:node">
+        <label for="node-input-qrcode"><i class="fa fa-qrcode"></i> QRCode</label>
+        <img id="node-input-qrcode" src="" />
     </div>
 </script>
