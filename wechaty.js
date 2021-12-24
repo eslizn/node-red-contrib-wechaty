@@ -36,8 +36,14 @@ module.exports = async function (RED) {
 				delete instances[config.id];
 			}
 			//read memory card to context
-			this.context().set('memory', await fs.readFile(config.id + '.memory-card.json'));
-			done();
+			fs.readFile(config.id + '.memory-card.json', 'utf-8', (err, data) => {
+				if (err) {
+					this.error(err);
+				} else {
+					this.context().set('memory', data);
+				}
+				done();
+			});
 		});
 
 		this.on('input', async (msg) => {
