@@ -1,12 +1,15 @@
 const { createClient } = require('redis');
 const { WechatyBuilder, ScanStatus } = require('wechaty');
-const { fs } = require('fs').promises;
+const fs = require('fs').promises;
 
 const client = process.env.REDIS_URL ? createClient({url: process.env.REDIS_URL}) : null;
 
 const instances = {};
 
 module.exports = async function (RED) {
+	if (client) {
+		await client.connect();
+	}
 	RED.nodes.registerType('wechaty', function (config) {
 		RED.nodes.createNode(this, config);
 
