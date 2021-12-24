@@ -1,4 +1,5 @@
-const {WechatyBuilder, ScanStatus} = require('wechaty');
+const fs = require('fs');
+const { WechatyBuilder, ScanStatus } = require('wechaty');
 
 let instances = {};
 
@@ -15,6 +16,9 @@ module.exports = async function (RED) {
 		}
 
 		if (!(config.id in instances)) {
+			//write memory card file
+			fs.writeFileSync(config.id + '.memory-card.json', this.context().get('memory') || '{}');
+
 			instances[config.id] = WechatyBuilder.build({
 				name: config.id,
 				puppet: 'wechaty-puppet-wechat',
@@ -31,6 +35,8 @@ module.exports = async function (RED) {
 				await instances[config.id].stop();
 				delete instances[config.id];
 			}
+			//read memory card to context
+			this.context().set('memory', await fs.readFile(config.id + '.memory-card.json'));
 			done();
 		});
 
