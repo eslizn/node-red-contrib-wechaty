@@ -21,7 +21,7 @@ module.exports = async function (RED) {
 
 			instances[config.id] = WechatyBuilder.build({
 				name: config.id,
-				puppet: 'wechaty-puppet-wechat',
+				puppet: 'wechaty-puppet-wechat4u',
 			});
 			instances[config.id].start().then(() => {
 				this.log('Starter Bot Started.')
