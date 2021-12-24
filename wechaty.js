@@ -35,15 +35,7 @@ module.exports = async function (RED) {
 				await instances[config.id].stop();
 				delete instances[config.id];
 			}
-			//read memory card to context
-			fs.readFile(config.id + '.memory-card.json', 'utf-8', (err, data) => {
-				if (err) {
-					this.error(err);
-				} else {
-					this.context().set('memory', data);
-				}
-				done();
-			});
+			done();
 		});
 
 		this.on('input', async (msg) => {
@@ -71,6 +63,14 @@ module.exports = async function (RED) {
 		instances[config.id].off('login', () => {}).on('login', (user) => {
 			this.refresh();
 			this.send({topic: 'login', payload: user});
+			//read memory card to context
+			fs.readFile(config.id + '.memory-card.json', 'utf-8', (err, data) => {
+				if (err) {
+					this.error(err);
+				} else {
+					this.context().set('memory', data);
+				}
+			});
 		}).off('logout', () => {}).on('logout', (user) => {
 			this.refresh();
 			this.send({topic: 'logout', payload: user});
