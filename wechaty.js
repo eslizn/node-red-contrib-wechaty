@@ -25,8 +25,7 @@ module.exports = async function (RED) {
 			instances[config.id].start().then(async () => {
 				this.log('Starter Bot Started.');
 			}).catch(async error => {
-				this.error(error);
-				//this.send({topic: 'error', payload: error});
+				this.send({topic: 'error', payload: error});
 			});
 		}
 
@@ -71,12 +70,16 @@ module.exports = async function (RED) {
 			this.refresh();
 			this.send({topic: 'logout', payload: user});
 		}).off('message', () => {}).on('message', (msg) => {
+			this.refresh();
 			this.send({topic: 'message', payload: msg});
 		}).off('friendship', () => {}).on('friendship', (friendship) => {
+			this.refresh();
 			this.send({topic: 'friendship', payload: friendship});
 		}).off('room-invite', () => {}).on('room-invite', (invite) => {
+			this.refresh();
 			this.send({topic: 'room-invite', payload: invite});
 		}).off('room-join', () => {}).on('room-join', (room, targets, inviter, date) => {
+			this.refresh();
 			this.send({
 				topic: 'room-join',
 				room: room,
@@ -85,6 +88,7 @@ module.exports = async function (RED) {
 				payload: targets
 			});
 		}).off('room-leave', () => {}).on('room-leave', (room, targets, remover, date) => {
+			this.refresh();
 			this.send({
 				topic: 'room-leave',
 				room: room,
@@ -93,6 +97,7 @@ module.exports = async function (RED) {
 				payload: targets
 			});
 		}).off('room-topic', () => {}).on('room-topic', (room, topic, old, changer, date) => {
+			this.refresh();
 			this.send({
 				topic: 'room-topic',
 				room: room,
@@ -119,8 +124,8 @@ module.exports = async function (RED) {
 			}
 			this.send({topic: 'scan', payload: qrcode, status: status});
 		}).off('error', () => {}).on('error', (error) => {
-			this.error(error);
-			//this.send({topic: 'error', payload: error});
+			this.refresh();
+			this.send({topic: 'error', payload: error});
 		});
 	});
 }
