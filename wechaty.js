@@ -25,7 +25,8 @@ module.exports = async function (RED) {
 			instances[config.id].start().then(async () => {
 				this.log('Starter Bot Started.');
 			}).catch(async error => {
-				this.send({topic: 'error', payload: error});
+				this.error(error);
+				//this.send({topic: 'error', payload: error});
 			});
 		}
 
@@ -38,7 +39,11 @@ module.exports = async function (RED) {
 		});
 
 		this.on('input', async (msg) => {
-			if (!(config.id in instances) || !instances[config.id].isLoggedIn || msg.self()) {
+			if (!(config.id in instances) || !instances[config.id].isLoggedIn) {
+				return;
+			}
+			if (msg.invoke) {
+				await msg.invoke(instances[config.id]);
 				return;
 			}
 			if (msg.respond) {
@@ -111,7 +116,8 @@ module.exports = async function (RED) {
 			}
 			this.send({topic: 'scan', payload: qrcode, status: status});
 		}).off('error', () => {}).on('error', (error) => {
-			this.send({topic: 'error', payload: error});
+			this.error(error);
+			//this.send({topic: 'error', payload: error});
 		});
 	});
 }
