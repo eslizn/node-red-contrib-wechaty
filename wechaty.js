@@ -1,39 +1,44 @@
 const { WechatyBuilder, ScanStatus } = require('wechaty');
 
+const instances = {};
+
 module.exports = async function (RED) {
 	RED.nodes.registerType('wechaty', function (config) {
 		RED.nodes.createNode(this, config);
-		this.wechaty = WechatyBuilder.build({
-			name: config.id,
-			puppet: config.puppet,
-			puppetOptions: {
-				token: config.token
-			}
-		});
-
-		this.wechaty.start().then(async () => {
-			this.log('Starter Bot Started.');
-		}).catch(async error => {
-			this.send({topic: 'error', payload: error});
-		});
 
 		this.refresh = () => {
-			if (this.wechaty.isLoggedIn) {
+			if (instances[config.id].isLoggedIn) {
 				this.status({fill: 'green', shape: 'dot', text: 'online'});
 			} else {
 				this.status({fill: 'red', shape: 'ring', text: 'offline'});
 			}
 		}
 
+		if (!(config.id in instances)) {
+			instances[config.id] = WechatyBuilder.build({
+				name: config.id,
+				puppet: config.puppet,
+				puppetOptions: {
+					token: config.token
+				}
+			});
+			instances[config.id].start().then(async () => {
+				this.log('Starter Bot Started.');
+			}).catch(async error => {
+				this.send({topic: 'error', payload: error});
+			});
+		}
+
 		this.on('close', async (removed, done) => {
-			if (removed) {
-				//await this.wechaty.stop();
+			if (config.id in instances) {
+				await instances[config.id].stop();
+				delete instances[config.id];
 			}
 			done();
 		});
 
 		this.on('input', async (msg) => {
-			if (!this.wechaty.isLoggedIn || msg.self()) {
+			if (!(config.id in instances) || !instances[config.id].isLoggedIn || msg.self()) {
 				return;
 			}
 			if (msg.respond) {
@@ -54,7 +59,7 @@ module.exports = async function (RED) {
 			}
 		});
 
-		this.wechaty.off('login', () => {}).on('login', async (user) => {
+		instances[config.id].off('login', () => {}).on('login', async (user) => {
 			this.refresh();
 			this.send({topic: 'login', payload: user});
 		}).off('logout', () => {}).on('logout', (user) => {
