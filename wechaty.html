@@ -6,12 +6,26 @@
 		}
 	}
 
+	$("#node-input-puppet").typedInput({
+        types: [
+            {
+                value: "puppet",
+                options: [
+                    { value: "wechaty-puppet-wechat", label: "wechaty-puppet-wechat"},
+                    { value: "wechaty-puppet-service", label: "wechaty-puppet-service"}
+                ]
+            }
+        ]
+    });
+
     RED.nodes.registerType('wechaty', {
         category: 'network',
         paletteLabel: 'wechaty',
         color: '#a6bbcf',
         defaults: {
-            name: {value: 'wechaty'}
+            name: {value: 'wechaty'},
+            puppet: {value: 'wechaty-puppet-wechat'},
+            token: {value: ''}
         },
         inputs: 1,
         outputs: 1,
@@ -63,6 +77,14 @@
         <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
         <input type="text" id="node-input-name" placeholder="instance name" />
     </div>
+    <div class="form-row">
+		<label for="node-input-puppet"><i class="fa fa-tag"></i> Puppet</label>
+		<input type="text" id="node-input-puppet" placeholder="puppet driver" />
+	</div>
+	<div class="form-row">
+		<label for="node-input-token"><i class="fa fa-tag"></i> Token</label>
+		<input type="text" id="node-input-token" placeholder="puppet token" />
+	</div>
     <div class="form-row" style="display:node">
         <label for="node-input-qrcode"><i class="fa fa-qrcode"></i> QRCode</label>
         <img id="node-input-qrcode" src="" />

@@ -1,15 +1,8 @@
-const { createClient } = require('redis');
 const { WechatyBuilder, ScanStatus } = require('wechaty');
-const fs = require('fs').promises;
-
-const client = process.env.REDIS_URL ? createClient({url: process.env.REDIS_URL}) : null;
 
 const instances = {};
 
 module.exports = async function (RED) {
-	if (client) {
-		await client.connect();
-	}
 	RED.nodes.registerType('wechaty', function (config) {
 		RED.nodes.createNode(this, config);
 
@@ -24,13 +17,13 @@ module.exports = async function (RED) {
 		if (!(config.id in instances)) {
 			instances[config.id] = WechatyBuilder.build({
 				name: config.id,
-				puppet: 'wechaty-puppet-wechat',
+				puppet: config.puppet,
+				puppetOptions: {
+					token: config.token
+				}
 			});
 			instances[config.id].start().then(async () => {
-				if (client) {
-					await fs.writeFile(config.id + '.memory-card.json', await client.hGet('wechaty.sessions', config.id));
-				}
-				this.log('Starter Bot Started.')
+				this.log('Starter Bot Started.');
 			}).catch(async error => {
 				this.send({topic: 'error', payload: error});
 			});
@@ -69,10 +62,6 @@ module.exports = async function (RED) {
 		instances[config.id].off('login', () => {}).on('login', async (user) => {
 			this.refresh();
 			this.send({topic: 'login', payload: user});
-			//read memory card to context
-			if (client) {
-				await client.hSet('wechaty.sessions', config.id, await fs.readFile(config.id + '.memory-card.json', 'utf-8'));
-			}
 		}).off('logout', () => {}).on('logout', (user) => {
 			this.refresh();
 			this.send({topic: 'logout', payload: user});
