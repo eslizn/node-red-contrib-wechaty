@@ -30,7 +30,7 @@ module.exports = async function (RED) {
 		}
 
 		this.on('close', async (removed, done) => {
-			if (config.id in instances) {
+			if ((config.id in instances) && removed) {
 				await instances[config.id].stop();
 				delete instances[config.id];
 			}
