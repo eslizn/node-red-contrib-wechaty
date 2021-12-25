@@ -1,22 +1,10 @@
 <script type="text/javascript">
-	const withAuthorization = (xhr) => {
-		xhr.setRequestHeader('Node-RED-API-Version', 'v2');
-		if (RED.settings.get("auth-tokens")) {
-			xhr.setRequestHeader('Authorization', 'Bearer ' + RED.settings.get("auth-tokens").access_token);
-		}
-	}
-
-	$("#node-input-puppet").typedInput({
-        types: [
-            {
-                value: "puppet",
-                options: [
-                    { value: "wechaty-puppet-wechat", label: "wechaty-puppet-wechat"},
-                    { value: "wechaty-puppet-service", label: "wechaty-puppet-service"}
-                ]
-            }
-        ]
-    });
+    const withAuthorization = (xhr) => {
+        xhr.setRequestHeader('Node-RED-API-Version', 'v2');
+        if (RED.settings.get("auth-tokens")) {
+            xhr.setRequestHeader('Authorization', 'Bearer ' + RED.settings.get("auth-tokens").access_token);
+        }
+    }
 
     RED.nodes.registerType('wechaty', {
         category: 'network',
@@ -34,32 +22,41 @@
             return this.name || 'wechaty';
         },
         oneditprepare: function () {
+            $("#node-input-puppet").typedInput({
+                types: [{
+                    value: "puppet",
+                    options: [
+                        {value: "wechaty-puppet-wechat", label: "wechaty-puppet-wechat"},
+                        {value: "wechaty-puppet-service", label: "wechaty-puppet-service"}
+                    ]
+                }]
+            });
             this.refresh = true;
             if (!this.interval) {
-            	this.interval = () => {
-					if (!this.interval) {
-						return;
-					}
-					$.ajax({
-						url: '/context/node/' + this.id,
-						dataType: 'json',
-						beforeSend: withAuthorization,
-					}).then((data) => {
-						data = Object.values(data).length ? Object.values(data)[0] : data;
-						if (data && data.qrcode && data.qrcode.msg && data.qrcode.msg.indexOf('https://') === 0) {
-							$('#node-input-qrcode').attr('src', data.qrcode.msg.replace('/l/', '/qrcode/'));
-							$('#node-input-qrcode').parent().show();
-						} else {
-							$('#node-input-qrcode').parent().hide();
-						}
-					}).fail(() => {
-						console.log(arguments);
-					}).always(() => {
-						if (this.refresh) {
-							setTimeout(this.interval, 3000);
-						}
-					});
-				};
+                this.interval = () => {
+                    if (!this.interval) {
+                        return;
+                    }
+                    $.ajax({
+                        url: '/context/node/' + this.id,
+                        dataType: 'json',
+                        beforeSend: withAuthorization,
+                    }).then((data) => {
+                        data = Object.values(data).length ? Object.values(data)[0] : data;
+                        if (data && data.qrcode && data.qrcode.msg && data.qrcode.msg.indexOf('https://') === 0) {
+                            $('#node-input-qrcode').attr('src', data.qrcode.msg.replace('/l/', '/qrcode/'));
+                            $('#node-input-qrcode').parent().show();
+                        } else {
+                            $('#node-input-qrcode').parent().hide();
+                        }
+                    }).fail(() => {
+                        console.log(arguments);
+                    }).always(() => {
+                        if (this.refresh) {
+                            setTimeout(this.interval, 3000);
+                        }
+                    });
+                };
             }
             this.interval();
         },
@@ -73,20 +70,20 @@
 </script>
 
 <script type="text/html" data-template-name="wechaty">
-    <div class="form-row">
-        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
-        <input type="text" id="node-input-name" placeholder="instance name" />
+    <div className="form-row">
+        <label htmlFor="node-input-name"><i className="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="instance name"/>
     </div>
-    <div class="form-row">
-		<label for="node-input-puppet"><i class="fa fa-tag"></i> Puppet</label>
-		<input type="text" id="node-input-puppet" placeholder="puppet driver" />
-	</div>
-	<div class="form-row">
-		<label for="node-input-token"><i class="fa fa-tag"></i> Token</label>
-		<input type="text" id="node-input-token" placeholder="puppet token" />
-	</div>
-    <div class="form-row" style="display:node">
-        <label for="node-input-qrcode"><i class="fa fa-qrcode"></i> QRCode</label>
-        <img id="node-input-qrcode" src="" />
+    <div className="form-row">
+        <label htmlFor="node-input-puppet"><i className="fa fa-tag"></i> Puppet</label>
+        <input type="text" id="node-input-puppet" placeholder="puppet driver"/>
+    </div>
+    <div className="form-row">
+        <label htmlFor="node-input-token"><i className="fa fa-tag"></i> Token</label>
+        <input type="text" id="node-input-token" placeholder="puppet token"/>
+    </div>
+    <div className="form-row" style="display:node">
+        <label htmlFor="node-input-qrcode"><i className="fa fa-qrcode"></i> QRCode</label>
+        <img id="node-input-qrcode" src=""/>
     </div>
 </script>

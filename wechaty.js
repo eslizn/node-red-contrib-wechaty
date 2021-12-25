@@ -104,9 +104,12 @@ module.exports = async function (RED) {
 		}).off('start', () => {}).on('start', () => {
 			this.refresh();
 			this.send({topic: 'start', payload: null});
-		}).off('stop', () => {}).on('stop', () => {
+		}).off('stop', () => {}).on('stop', async () => {
 			this.refresh();
 			this.send({topic: 'stop', payload: null});
+			if (config.id in instances) {
+				await instances[config.id].start();
+			}
 		}).off('scan', () => {}).on('scan', (qrcode, status, data) => {
 			this.refresh();
 			this.context().set('qrcode', qrcode);

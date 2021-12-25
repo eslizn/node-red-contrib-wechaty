@@ -13,10 +13,10 @@
     }
   },
   "dependencies": {
-    "wechaty": "^1.11.25",
-    "wechaty-puppet": "^1.10.2",
-    "wechaty-puppet-service": "^1.10.2",
-    "wechaty-puppet-wechat": "^1.10.5"
+    "wechaty": "~1.11",
+    "wechaty-puppet": "~1.11",
+    "wechaty-puppet-service": "~1.11",
+    "wechaty-puppet-wechat": "~1.11"
   },
   "description": "",
   "scripts": {
