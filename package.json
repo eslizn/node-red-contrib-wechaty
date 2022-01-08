@@ -15,8 +15,10 @@
   "dependencies": {
     "wechaty": "~1.11",
     "wechaty-puppet": "~1.11",
+    "wechaty-puppet-padlocal": "^0.4.2",
     "wechaty-puppet-service": "~1.11",
-    "wechaty-puppet-wechat": "~1.11"
+    "wechaty-puppet-wechat": "~1.11",
+    "wechaty-puppet-wechat4u": "^1.10.2"
   },
   "description": "",
   "scripts": {
