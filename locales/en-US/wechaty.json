@@ -1,1 +1,7 @@
-{}
+{
+  "label": {
+    "puppet": "Puppet",
+    "token": "Token",
+    "options": "Options"
+  }
+}

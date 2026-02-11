@@ -23,10 +23,8 @@
         },
         oneditprepare: function () {
             $("#node-input-puppet").typedInput({types: [{options: [
-                {value: "wechaty-puppet-wechat", label: "wechaty-puppet-wechat"},
                 {value: "wechaty-puppet-wechat4u", label: "wechaty-puppet-wechat4u"},
-                {value: "wechaty-puppet-service", label: "wechaty-puppet-service"},
-                {value: "wechaty-puppet-padlocal", label: "wechaty-puppet-padlocal"}
+                {value: "wechaty-puppet-service", label: "wechaty-puppet-service"}
             ]}]});
             $("#node-input-puppetOptions").typedInput({type:"json", types:["json"]});
             this.refresh = () => {
