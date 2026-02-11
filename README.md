@@ -43,9 +43,7 @@ When adding a WeChaty node to your flow, configure the following properties:
 - **Name**: Display name for the node (optional)
 - **Puppet**: WeChaty puppet driver to use:
   - `wechaty-puppet-wechat4u` - Web-based puppet (recommended for beginners)
-  - `wechaty-puppet-padlocal` - Paid service with better stability
   - `wechaty-puppet-service` - Token-based service puppet
-  - `wechaty-puppet-wechat` - Legacy web puppet
 - **Options**: JSON configuration for puppet-specific options
 
 ### Puppet Options Examples
