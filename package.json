@@ -1,7 +1,6 @@
 {
   "name": "node-red-contrib-wechaty",
-  "version": "1.0.2",
-  "main": "index.js",
+  "version": "1.0.3",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -13,13 +12,13 @@
     }
   },
   "dependencies": {
-    "wechaty": "~1.11.33",
-    "wechaty-puppet": "~1.11.14",
-    "wechaty-puppet-service": "~1.11.2",
-    "wechaty-puppet-wechat": "~1.11.8",
-    "wechaty-puppet-wechat4u": "^1.10.2",
-    "wechaty-puppet-padlocal": "^0.4.2",
-    "wechaty-puppet-xp": "^1.10.2"
+    "wechaty": "1.20.2",
+    "wechaty-puppet": "^1.20.2",
+    "wechaty-puppet-service": "~1.18.2",
+    "wechaty-puppet-wechat": "~1.18.4",
+    "wechaty-puppet-padlocal": "^1.20.1",
+    "wechaty-puppet-xp": "^2.2.0",
+    "wechaty-puppet-wechat4u": "^1.14.14"
   },
   "description": "",
   "scripts": {
@@ -31,7 +30,7 @@
   ],
   "author": "eslizn <eslizn@gmail.com>",
   "devDependencies": {
-    "node-red-node-test-helper": "^0.2.7"
+    "node-red-node-test-helper": "^0.3.6"
   },
   "bugs": {
     "url": "https://github.com/eslizn/node-red-contrib-wechaty/issues"

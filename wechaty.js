@@ -1,131 +1,205 @@
-const { WechatyBuilder, ScanStatus } = require('wechaty');
+const wasi = require("node:wasi");
+const WechatyBuilder = require('wechaty').WechatyBuilder;
+const MemoryCard = require('memory-card').MemoryCard;
 
-const instances = {};
+function WechatyNode(RED) {
+    return function (config) {
+        RED.nodes.createNode(this, config);
+        this.status({fill: 'red', shape: 'ring', text: 'offline'});
+        this.context().get('session', (err, session) => {
+            this.wechaty = WechatyBuilder.build({
+                name: this.id,
+                puppet: config.puppet,
+                puppetOptions: config.puppetOptions,
+                memory: MemoryCard.fromJSON({payload: session ? session : {}}),
+            });
+            this.wechaty.on('scan', (qrcode, status) => {
+                this.context().set('qrcode', qrcode.replaceAll(/\/l\//g, '/qrcode/'));
+            }).on('login', (user) => {
+                this.context().set('session', this.wechaty.memory.payload, () => {
+                    this.status({fill: 'green', shape: 'dot', text: 'online'});
+                    this.context().set('qrcode', '');
+                    this.send({
+                        topic: 'login',
+                        payload: user,
+                        _node: this.id,
+                    });
+                });
+            }).on('logout', () => {
+                this.context().set('session', this.wechaty.memory.payload, async () => {
+                    this.status({fill: 'red', shape: 'ring', text: 'offline'});
+                    try {
+                        await this.wechaty.stop();
+                        await this.wechaty.start();
+                    } catch (e) {
+                        this.send({
+                            topic: 'error',
+                            payload: e,
+                            _node: this.id,
+                        });
+                    }
+                });
+                this.send({
+                    topic: 'logout',
+                    payload: null,
+                    _node: this.id,
+                });
+            }).on('message', (message) => {
+                message.topic = 'message';
+                message._node = this.id;
+                this.send(message);
+            }).on('friendship', (friendship) => {
+                friendship.topic = 'friendship';
+                friendship._node = this.id;
+                this.send(friendship);
+            }).on('room-join', (room, list, inviter) => {
+                this.send({
+                    topic: 'room-join',
+                    room: room,
+                    payload: list,
+                    inviter: inviter,
+                    _node: this.id,
+                });
+            }).on('room-leave', (room, list, remover) => {
+                this.send({
+                    topic: 'room-leave',
+                    room: room,
+                    payload: list,
+                    remover: remover,
+                    _node: this.id,
+                });
+            }).on('room-topic', (room, now, old, changer) => {
+                this.send({
+                    topic: 'room-topic',
+                    room: room,
+                    payload: now,
+                    old: old,
+                    changer: changer,
+                    _node: this.id,
+                });
+            }).on('room-invite', (invitation) => {
+                invitation.topic = 'room-invite';
+                invitation._node = this.id;
+                this.send(invitation);
+            }).on('error', (error) => {
+                this.send({
+                    topic: 'error',
+                    payload: error,
+                    _node: this.id,
+                });
+            }).start();
+        })
+
+        this.on('close', async (removed, done) => {
+            try {
+                if (removed) {
+                    await this.wechaty.logout();
+                    await this.wechaty.stop();
+                }
+                this.context().set('session', this.wechaty.memory.payload, done);
+            } catch (e) {
+                this.send({
+                    topic: 'error',
+                    payload: e,
+                    _node: this.id,
+                });
+            }
+        });
+
+        this.on('input', async (msg) => {
+            if (!this.wechaty.logonoff()) {
+                return this.send({
+                    topic: 'error',
+                    payload: 'wechaty not login',
+                    _node: this.id,
+                });
+            }
+
+            try {
+                switch (msg.topic)
+                {
+                    case 'logout':
+                        await this.wechaty.logout();
+                        break;
+                    case 'message':
+                        await handleInputMessage.apply(this, [msg.payload, msg.to, msg.room])
+                        break;
+                    case 'function':
+                        if (typeof(msg.payload) === 'function') {
+                            await msg.payload(this.wechaty);
+                        }
+                        break;
+                    default:
+                        this.send({
+                            topic: 'error',
+                            payload: msg,
+                            _node: this.id,
+                        });
+                }
+            } catch (e) {
+                this.send({
+                    topic: 'error',
+                    payload: e,
+                    _node: this.id,
+                });
+            }
+        });
+    }
+}
+
+async function handleInputMessage(payload, to, room)
+{
+    if (room) {
+        return await handleInputRoomMessage(payload, room.split(','), to ? to.split(','): []);
+    }
+    if (to) {
+        return await handleInputContactMessage(payload, to.split(','));
+    }
+    await this.wechaty.say(payload);
+}
+
+async function handleInputContactMessage(payload, contacts)
+{
+    let query = await this.wechaty.Contact.findAll();
+    query = query.filter(async function (x) {
+        if (!x.friend()) {
+            return false;
+        }
+        if (x.self()) {
+            return false;
+        }
+        return contacts.indexOf(x.name()) >= 0 ||
+            contacts.indexOf(x.id) >= 0 ||
+            contacts.indexOf(await x.alias()) >= 0;
+    })
+    for (let contact of query) {
+        await contact.say(payload)
+    }
+}
+
+async function handleInputRoomMessage(payload, rooms, members)
+{
+    let query = await this.wechaty.Room.findAll();
+    query = query.filter(async function (x) {
+        return rooms.indexOf(x.id) >= 0 ||
+            rooms.indexOf(await x.topic()) >= 0;
+    })
+    for (let room of query) {
+        let at = [];
+        if (members.length > 0) {
+            at = (await room.memberAll()).filter(async function (x) {
+                if (x.self()) {
+                    return false;
+                }
+                return members.indexOf(x.name()) >= 0 ||
+                    members.indexOf(x.id) >= 0 ||
+                    members.indexOf(await x.alias()) >= 0;
+            })
+        }
+        await room.say(payload, ...at);
+    }
+}
 
 module.exports = async function (RED) {
-	RED.nodes.registerType('wechaty', function (config) {
-		RED.nodes.createNode(this, config);
-
-		this.refresh = () => {
-			if (instances[config.id].isLoggedIn) {
-				this.status({fill: 'green', shape: 'dot', text: 'online'});
-			} else {
-				this.status({fill: 'red', shape: 'ring', text: 'offline'});
-			}
-		}
-
-		if (!(config.id in instances)) {
-			instances[config.id] = WechatyBuilder.build({
-				name: config.id,
-				puppet: config.puppet,
-				puppetOptions: {
-					token: config.token
-				}
-			});
-			instances[config.id].start().then(async () => {
-				this.log('Starter Bot Started.');
-			}).catch(async error => {
-				this.send({topic: 'error', payload: error});
-			});
-		}
-
-		this.on('close', async (removed, done) => {
-			if ((config.id in instances) && removed) {
-				await instances[config.id].stop();
-				delete instances[config.id];
-			}
-			done();
-		});
-
-		this.on('input', async (msg) => {
-			if (!(config.id in instances) || !instances[config.id].isLoggedIn) {
-				return;
-			}
-			if (msg.invoke) {
-				await msg.invoke(instances[config.id]);
-				return;
-			}
-			if (msg.respond) {
-				await msg.respond.say(msg.payload);
-				return;
-			}
-			if (msg.room) {
-				await msg.room.say(msg.payload);
-				return;
-			}
-			if (msg.forward) {
-				await msg.payload.forward(msg.forward);
-				return;
-			}
-			if (msg.contact) {
-				await msg.contact.say(msg.forward);
-				return;
-			}
-		});
-
-		instances[config.id].off('login', () => {}).on('login', async (user) => {
-			this.refresh();
-			this.send({topic: 'login', payload: user});
-		}).off('logout', () => {}).on('logout', (user) => {
-			this.refresh();
-			this.send({topic: 'logout', payload: user});
-		}).off('message', () => {}).on('message', (msg) => {
-			this.refresh();
-			this.send({topic: 'message', payload: msg});
-		}).off('friendship', () => {}).on('friendship', (friendship) => {
-			this.refresh();
-			this.send({topic: 'friendship', payload: friendship});
-		}).off('room-invite', () => {}).on('room-invite', (invite) => {
-			this.refresh();
-			this.send({topic: 'room-invite', payload: invite});
-		}).off('room-join', () => {}).on('room-join', (room, targets, inviter, date) => {
-			this.refresh();
-			this.send({
-				topic: 'room-join',
-				room: room,
-				inviter: inviter,
-				date: date,
-				payload: targets
-			});
-		}).off('room-leave', () => {}).on('room-leave', (room, targets, remover, date) => {
-			this.refresh();
-			this.send({
-				topic: 'room-leave',
-				room: room,
-				remover: remover,
-				date: date,
-				payload: targets
-			});
-		}).off('room-topic', () => {}).on('room-topic', (room, topic, old, changer, date) => {
-			this.refresh();
-			this.send({
-				topic: 'room-topic',
-				room: room,
-				old: old,
-				changer: changer,
-				date: date,
-				payload: topic
-			});
-		}).off('start', () => {}).on('start', () => {
-			this.refresh();
-			this.send({topic: 'start', payload: null});
-		}).off('stop', () => {}).on('stop', async () => {
-			this.refresh();
-			this.send({topic: 'stop', payload: null});
-			if (config.id in instances) {
-				await instances[config.id].start();
-			}
-		}).off('scan', () => {}).on('scan', (qrcode, status, data) => {
-			this.refresh();
-			this.context().set('qrcode', qrcode);
-			this.context().set('status', status);
-			if (status !== ScanStatus.Waiting) {
-				return;
-			}
-			this.send({topic: 'scan', payload: qrcode, status: status});
-		}).off('error', () => {}).on('error', (error) => {
-			this.refresh();
-			this.send({topic: 'error', payload: error});
-		});
-	});
+    RED.nodes.registerType('wechaty', WechatyNode(RED));
 }
